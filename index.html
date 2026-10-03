@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كلية العلوم الصحية</title>
+<script>
+  try{const d=document.documentElement,t=localStorage.getItem('fhs-theme');
+  if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))d.classList.add('dark');
+  d.dataset.theme=localStorage.getItem('fhs-color')||'teal'}catch(e){}
+</script>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#0f766e">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: {
+      fontFamily:{sans:['Cairo','system-ui','sans-serif']},
+      colors:{brand:{50:'var(--b0)',100:'var(--b1)',200:'var(--b2)',300:'var(--b3)',400:'var(--b3)',500:'var(--b5)',600:'var(--b6)',700:'var(--b7)',800:'var(--b8)',900:'var(--b9)',950:'var(--b95)'}},
+      animation: { 'fade-in': 'fadeIn .25s ease-out forwards', 'slide-up': 'slideUp .25s ease-out forwards' },
+      keyframes: { fadeIn: { '0%': {opacity:'0'}, '100%': {opacity:'1'} }, slideUp: { '0%': {opacity:'0',transform:'translateY(10px)'}, '100%': {opacity:'1',transform:'translateY(0)'} } }
+    } }
+  }
+</script>
+</head>
+<body class="app text-slate-800 dark:text-slate-100 min-h-screen font-sans">
+
+<div id="splash"><div class="text-center text-white" style="animation:pop .6s ease-out both">
+  <svg width="104" height="104" viewBox="0 0 512 512" class="mx-auto drop-shadow-lg"><rect width="512" height="512" rx="110" fill="#fff" fill-opacity=".18"/><path d="M216 120h80v96h96v80h-96v96h-80v-96h-96v-80h96z" fill="#fff"/></svg>
+  <h1 class="text-2xl font-black mt-4">كلية العلوم الصحية</h1><p class="text-sm opacity-80 mt-1">البوابة الأكاديمية الشاملة</p>
+  <div class="mt-6 mx-auto w-28 h-1 rounded-full bg-white/25 overflow-hidden"><div style="height:100%;width:40%;background:#fff;animation:load 1.2s ease-in-out infinite"></div></div>
+</div></div>
+<header class="sticky top-0 z-40 text-white shadow-lg" style="background:linear-gradient(135deg,var(--b8),var(--b6))">
+  <div class="max-w-3xl mx-auto flex items-center gap-3 px-4 pb-3" style="padding-top:max(.75rem,env(safe-area-inset-top))">
+    <button id="back-btn" aria-label="رجوع" class="hidden w-10 h-10 shrink-0 rounded-full bg-white/20 active:scale-90 transition place-items-center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <div class="min-w-0 flex-1"><h1 id="title" class="text-lg font-black truncate leading-tight"></h1><p id="subtitle" class="text-[11px] opacity-80 truncate"></p></div>
+    <button id="bell-btn" aria-label="الإشعارات" class="relative w-10 h-10 shrink-0 rounded-full bg-white/20 active:scale-90 transition grid place-items-center">🔔<span id="bell-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-[10px] font-black grid place-items-center">0</span></button>
+    <button id="admin-btn" aria-label="لوحة الإشراف" class="hidden w-10 h-10 shrink-0 rounded-full bg-amber-500 active:scale-90 transition place-items-center">🔐</button>
+  </div>
+</header>
+<main class="max-w-3xl mx-auto px-4 pt-4"><div id="view"></div></main>
+
+<nav id="bnav" class="fixed bottom-0 inset-x-0 z-40 glass !rounded-none !border-x-0 !border-b-0" style="padding-bottom:env(safe-area-inset-bottom)">
+  <div class="max-w-3xl mx-auto grid grid-cols-3 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+    <a href="#/" class="flex flex-col items-center gap-0.5 py-2 active:scale-90 transition"><span class="text-xl">🏠</span>الرئيسية</a>
+    <a href="#/fav" class="flex flex-col items-center gap-0.5 py-2 active:scale-90 transition"><span class="text-xl">⭐</span>المفضلة</a>
+    <a href="#/settings" class="flex flex-col items-center gap-0.5 py-2 active:scale-90 transition"><span class="text-xl">⚙️</span>الإعدادات</a>
+  </div>
+</nav>
+<div id="sheet" class="fixed inset-0 z-50 hidden bg-black/50 items-end">
+  <div class="w-full max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-t-3xl p-5 pb-8 max-h-[80vh] overflow-y-auto">
+    <div class="w-10 h-1 rounded-full bg-slate-300 mx-auto mb-4"></div><div id="sheet-body"></div>
+  </div>
+</div>
+
+<!-- لوحة الأدمن -->
+<div id="admin-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative">
+    <button id="admin-close" aria-label="إغلاق" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold p-2">✕</button>
+    <div class="border-b border-slate-100 dark:border-slate-700 pb-4 mb-5">
+      <h3 class="text-lg font-black text-brand-800 dark:text-brand-400">🛠️ إدارة قسم: <span id="adm-dept"></span></h3>
+    </div>
+
+    <section class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-5 space-y-3">
+      <h4 class="font-bold text-xs text-brand-700 dark:text-brand-300">📘 1. إضافة مادة جديدة</h4>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+        <select id="ns-year" class="inp"></select>
+        <select id="ns-sem" class="inp"></select>
+        <input id="ns-name" type="text" maxlength="80" placeholder="اسم المادة" class="inp">
+      </div>
+      <button id="ns-add" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-xl text-xs transition">إضافة المادة</button>
+    </section>
+
+    <section class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-5 space-y-3">
+      <h4 class="font-bold text-xs text-brand-700 dark:text-brand-300">📂 2. إضافة ملف لمادة</h4>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+        <select id="nf-year" class="inp"></select>
+        <select id="nf-sem" class="inp"></select>
+        <select id="nf-sub" class="inp"></select>
+        <select id="nf-tab" class="inp"></select>
+      </div>
+      <input id="nf-title" type="text" maxlength="120" placeholder="عنوان الملف" class="inp text-xs">
+      <input id="nf-url" type="url" dir="ltr" placeholder="https://..." class="inp text-xs">
+      <button id="nf-add" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-xl text-xs transition">حفظ ونشر الملف</button>
+    </section>
+
+    <section class="border-t border-slate-200 dark:border-slate-700 pt-4">
+      <h4 class="font-bold text-xs text-rose-600 dark:text-rose-400 mb-2">🗑️ 3. البحث وحذف مادة أو ملف</h4>
+      <input id="del-q" type="search" placeholder="🔍 اسم المادة أو الملف..." class="inp text-xs mb-3">
+      <div id="del-list" class="space-y-2 max-h-56 overflow-y-auto"></div>
+    </section>
+  </div>
+</div>
+
+<!-- نافذة حوار عامة (بديل prompt / confirm / alert) -->
+<div id="dlg" class="fixed inset-0 bg-slate-900/70 z-[60] hidden items-center justify-center p-4">
+  <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl">
+    <h3 id="dlg-title" class="font-black mb-2"></h3>
+    <p id="dlg-msg" class="text-sm text-slate-600 dark:text-slate-300 mb-3"></p>
+    <input id="dlg-input" type="password" class="inp mb-3 hidden" autocomplete="off">
+    <div class="flex gap-2 justify-end">
+      <button id="dlg-cancel" class="px-4 py-2 rounded-xl text-sm bg-slate-100 dark:bg-slate-700">إلغاء</button>
+      <button id="dlg-ok" class="px-4 py-2 rounded-xl text-sm bg-brand-600 text-white font-bold">موافق</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] hidden bg-slate-900 text-white text-sm px-4 py-2 rounded-xl shadow-lg"></div>
+
+<style>
+  :root{--b6:#0d9488;--b8:#115e59}
+  [data-theme=teal]{--b6:#0d9488;--b8:#115e59}
+  [data-theme=blue]{--b6:#2563eb;--b8:#1e40af}
+  [data-theme=violet]{--b6:#7c3aed;--b8:#5b21b6}
+  [data-theme=rose]{--b6:#e11d48;--b8:#9f1239}
+  [data-theme=amber]{--b6:#d97706;--b8:#92400e}
+  :root{--b7:color-mix(in srgb,var(--b6) 55%,var(--b8));--b5:color-mix(in srgb,var(--b6) 85%,white);--b3:color-mix(in srgb,var(--b6) 45%,white);
+    --b2:color-mix(in srgb,var(--b6) 25%,white);--b1:color-mix(in srgb,var(--b6) 14%,white);--b0:color-mix(in srgb,var(--b6) 7%,white);
+    --b9:color-mix(in srgb,var(--b8) 70%,black);--b95:color-mix(in srgb,var(--b8) 35%,black)}
+  .dark{--b0:color-mix(in srgb,var(--b6) 12%,#0f172a);--b1:color-mix(in srgb,var(--b6) 22%,#0f172a);--b2:color-mix(in srgb,var(--b6) 32%,#0f172a)}
+  body.app{background:color-mix(in srgb,var(--b6) 5%,#f8fafc);padding-bottom:5.5rem;-webkit-tap-highlight-color:transparent}
+  .dark body.app{background:color-mix(in srgb,var(--b8) 14%,#0b1120)}
+  .inp{width:100%;padding:.5rem;border-radius:.75rem;border:1px solid rgb(226 232 240);background:#fff;color:inherit}
+  .dark .inp{background:rgb(30 41 59);border-color:rgb(51 65 85)}
+  .card{background:#fff;border:1px solid rgb(241 245 249);border-radius:1rem;box-shadow:0 1px 2px rgb(0 0 0/.05)}
+  .dark .card{background:rgb(30 41 59);border-color:rgb(51 65 85/.6)}
+  a:focus-visible,button:focus-visible,.inp:focus-visible{outline:2px solid var(--b5);outline-offset:2px}
+  :root{--pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%230d9488' stroke-opacity='.17' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M30 18v20M20 28h20'/%3E%3Cpath d='M92 96h14l6-14 8 28 6-14h14'/%3E%3Ccircle cx='122' cy='30' r='9'/%3E%3Crect x='28' y='104' width='28' height='12' rx='6' transform='rotate(-30 42 110)'/%3E%3C/g%3E%3C/svg%3E")}
+  body.app{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--b5) 38%,transparent),transparent 42%),radial-gradient(circle at 92% 55%,color-mix(in srgb,var(--b8) 30%,transparent),transparent 45%),var(--pat),color-mix(in srgb,var(--b6) 6%,#f1f5f9);background-attachment:fixed}
+  .dark body.app{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--b6) 30%,transparent),transparent 42%),radial-gradient(circle at 92% 55%,color-mix(in srgb,var(--b8) 40%,transparent),transparent 45%),var(--pat),color-mix(in srgb,var(--b8) 16%,#0b1120);background-attachment:fixed}
+  .card,.glass{background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.75);box-shadow:0 4px 18px rgb(15 23 42/.08)}
+  .dark .card,.dark .glass{background:rgba(30,41,59,.55);border-color:rgba(255,255,255,.09)}
+  #splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:linear-gradient(160deg,var(--b8),var(--b6));transition:opacity .5s}
+  #splash.out{opacity:0;pointer-events:none}
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes load{0%{transform:translateX(120%)}100%{transform:translateX(-250%)}}
+</style>
+
+<script>
+'use strict';
+/* ========== أدوات مساعدة ========== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl = u => { try { const x = new URL(u); return x.protocol === 'https:' ? x.href : null; } catch { return null; } };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const sha256 = async t => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, '0')).join('');
+
+/* ========== الثوابت ========== */
+const DEPTS = {
+  SLP: { name: 'تقويم الكلام واللغة', icon: '🗣️', c: ['#14b8a6','#0369a1'], h: 'ab5dcc1a16c8b86c6f9e1c666ef8e50d5dfd1fcb35d3fe6f7133209af3e37488' },
+  Audiology: { name: 'السمعيات', icon: '👂', c: ['#6366f1','#7e22ce'], h: '54b3a51133731af31a6d839861dc388514e9d3bd67da6d2c4a54b3366bb198d7' },
+  Prosthetics: { name: 'الأطراف الصناعية', icon: '🦾', c: ['#f59e0b','#dc2626'], h: 'ba870c20483c3eaffd03cdcea8fb343cfc0098847a092ea3db24b7fd177fd547' },
+  Occupational_Therapy: { name: 'العلاج الوظيفي', icon: '🖐️', c: ['#10b981','#047857'], h: '4d3981f9a5186f73ce47152e9137d20ae840fafa25e6d8f8adff258d8c2d082a' },
+  Clinical_Psychology: { name: 'علم النفس السريري', icon: '🧠', c: ['#ec4899','#7c3aed'], h: 'fb1549ec668427876d6567d44607845418b75dd11639a2d0a3cbdcf826e878c2' },
+  Radiology: { name: 'التشخيص الشعاعي', icon: '🦴', c: ['#0ea5e9','#1e3a8a'], h: 'ad5569b49703d11a572c3b6982c9d05adaaf5d62e1998cb82a31b8e494307012' }
+};
+const YEARS = { Year1: 'السنة الأولى', Year2: 'السنة الثانية', Year3: 'السنة الثالثة', Year4: 'السنة الرابعة' };
+const SEMS = { Sem1: 'الفصل الأول', Sem2: 'الفصل الثاني' };
+const TABS = { pdfs: ['📚 المحاضرات (PDF)', '📄'], audios: ['🎙️ فويسات', '🎵'], summaries: ['📝 ملخصات', '📌'], exams: ['📑 أسئلة دورات', '📝'] };
+const emptyFiles = () => ({ pdfs: [], audios: [], summaries: [], exams: [] });
+
+/* ========== البيانات (تُحفظ محلياً في المتصفح) ========== */
+const KEY = 'fhs-data-v2';
+function seed() {
+  const d = Object.fromEntries(Object.keys(DEPTS).map(k => [k, []]));
+  d.SLP = [
+    { id: uid(), year: 'Year1', sem: 'Sem1', name: 'مقدمة في اضطرابات الكلام واللغة', files: {
+      pdfs: [{ id: uid(), title: 'المحاضرة 1: مدخل عام', url: 'https://example.com/1' }, { id: uid(), title: 'المحاضرة 2: التصنيفات الطبية', url: 'https://example.com/2' }],
+      audios: [{ id: uid(), title: 'شرح المحاضرة الأولى', url: 'https://example.com/a1' }],
+      summaries: [{ id: uid(), title: 'ملخص الفصل الأول الشامل', url: 'https://example.com/s1' }],
+      exams: [{ id: uid(), title: 'دورة 2024 الفصل الأول', url: 'https://example.com/e1' }] } },
+    { id: uid(), year: 'Year1', sem: 'Sem1', name: 'تشريح وفسيولوجيا أعضاء النطق', files: emptyFiles() },
+    { id: uid(), year: 'Year1', sem: 'Sem2', name: 'علم الصوتيات', files: emptyFiles() }
+  ];
+  return d;
+}
+let data;
+try { data = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { data = seed(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { toast('تعذر حفظ البيانات في المتصفح'); } };
+if (!localStorage.getItem(KEY)) save(); // تثبيت المعرّفات من أول فتح
+
+/* ========== حالة الواجهة ========== */
+let route = {}, activeTab = 'pdfs', searchQuery = '';
+const view = $('#view'), titleEl = $('#title'), backBtn = $('#back-btn'), adminBtn = $('#admin-btn'), crumbs = $('#crumbs');
+
+/* ========== نوافذ وإشعارات ========== */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 2500); }
+function dialog({ title, msg = '', input = false, okText = 'موافق' }) {
+  return new Promise(resolve => {
+    const d = $('#dlg'), i = $('#dlg-input');
+    $('#dlg-title').textContent = title; $('#dlg-msg').textContent = msg; $('#dlg-ok').textContent = okText;
+    i.value = ''; i.classList.toggle('hidden', !input);
+    d.classList.remove('hidden'); d.classList.add('flex'); (input ? i : $('#dlg-ok')).focus();
+    const done = v => { d.classList.add('hidden'); d.classList.remove('flex'); $('#dlg-ok').onclick = $('#dlg-cancel').onclick = i.onkeydown = null; resolve(v); };
+    $('#dlg-ok').onclick = () => done(input ? i.value : true);
+    $('#dlg-cancel').onclick = () => done(null);
+    i.onkeydown = e => { if (e.key === 'Enter') done(i.value); if (e.key === 'Escape') done(null); };
+  });
+}
+
+/* ========== التوجيه ========== */
+const go = (...p) => { location.hash = '#/' + p.map(encodeURIComponent).join('/'); };
+function parseRoute() {
+  const [dept, year, sem, sub] = location.hash.slice(2).split('/').filter(Boolean).map(decodeURIComponent);
+  const r = {};
+  if (DEPTS[dept]) { r.dept = dept;
+    if (YEARS[year]) { r.year = year;
+      if (SEMS[sem]) { r.sem = sem;
+        if (data[dept].some(s => s.id === sub)) r.sub = sub; } } }
+  return r;
+}
+
+/* ========== الأوفلاين: حفظ الملفات في Cache Storage ========== */
+let saved = new Set(); try { saved = new Set(JSON.parse(localStorage.getItem('fhs-saved') || '[]')); } catch {}
+async function cacheFile(url) {
+  if (saved.has(url) || !('caches' in self)) return saved.has(url);
+  try {
+    const r = await fetch(url, { mode: 'cors' }); if (!r.ok) return false;
+    await (await caches.open('fhs-files')).put(url, r);
+    saved.add(url); localStorage.setItem('fhs-saved', JSON.stringify([...saved])); return true;
+  } catch { return false; }
+}
+
+/* ========== مكونات الواجهة ========== */
+let semQ = '', redraw = () => {};
+const chev = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-40"><path d="M15 6l-6 6 6 6"/></svg>';
+const subCount = (d, y, s) => data[d].filter(x => x.year === y && x.sem === s).length;
+const nFiles = s => Object.values(s.files).reduce((a, b) => a + b.length, 0);
+const empty = m => `<div class="text-center py-10 text-slate-400 card border-dashed"><div class="text-3xl mb-1">📭</div>${m}</div>`;
+const rowCard = (href, badge, title, sub) => `
+  <a href="${href}" class="glass rounded-2xl p-4 flex items-center gap-4 active:scale-[.98] transition hover:shadow-md">
+    <span class="w-12 h-12 shrink-0 rounded-2xl grid place-items-center text-2xl font-black text-white shadow" style="background:linear-gradient(135deg,var(--b5),var(--b8))">${badge}</span>
+    <span class="min-w-0 flex-1"><b class="block truncate">${esc(title)}</b><span class="text-xs text-slate-500 dark:text-slate-400">${esc(sub)}</span></span>${chev}
+  </a>`;
+const fileRow = (f, icon, sub) => {
+  const u = safeUrl(f.url), sv = u && saved.has(u), fv = favs.has(f.id), dn = done.has(f.id), isNew = f.ts && Date.now() - f.ts < 6048e5;
+  return `<div class="card p-3 ${dn ? 'ring-1 ring-emerald-400/60' : ''}">
+    <div class="flex items-center gap-2.5">
+      <span class="w-10 h-10 shrink-0 rounded-xl grid place-items-center text-xl" style="background:var(--b1)">${dn ? '✅' : icon}</span>
+      <div class="min-w-0 flex-1"><b class="block truncate text-sm">${isNew ? '<span class="text-[10px] font-bold text-white bg-rose-500 rounded px-1.5 ml-1">جديد</span>' : ''}${esc(f.title)}</b>
+        ${sub ? `<span class="text-[11px] text-slate-500 dark:text-slate-400 block truncate">${esc(sub)}</span>` : ''}
+        ${sv ? '<span class="text-[11px] text-emerald-600 dark:text-emerald-400">✓ متاح بدون إنترنت</span>' : ''}</div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5">
+      <button data-fav="${f.id}" aria-label="مفضلة" class="w-9 h-9 shrink-0 text-xl ${fv ? '' : 'opacity-40'}">${fv ? '⭐' : '☆'}</button>
+      <button data-done="${f.id}" class="h-9 px-2.5 shrink-0 rounded-xl text-xs font-bold border ${dn ? 'bg-emerald-500 text-white border-emerald-500' : 'border-slate-300 dark:border-slate-600'}">${dn ? '✓ تمت الدراسة' : 'علّم كمدروس'}</button>
+      ${u ? `<button data-share="${f.id}" aria-label="مشاركة" class="w-9 h-9 shrink-0 rounded-xl border border-slate-300 dark:border-slate-600">📤</button>
+      ${sv ? '' : `<button data-save="${esc(u)}" aria-label="حفظ للأوفلاين" class="w-9 h-9 shrink-0 rounded-xl border border-slate-300 dark:border-slate-600">⬇️</button>`}
+      <a data-file href="${esc(u)}" target="_blank" rel="noopener noreferrer" class="mr-auto shrink-0 px-4 py-2 rounded-xl text-xs font-bold text-white" style="background:var(--b6)">فتح</a>` : '<span class="mr-auto text-xs text-rose-500">رابط غير صالح</span>'}
+    </div>
+  </div>`;
+};
+const home = () => `
+  <section class="relative overflow-hidden rounded-3xl p-6 text-white mb-6 shadow-xl" style="background:linear-gradient(135deg,var(--b8),var(--b6))">
+    <span class="absolute -left-10 -top-10 w-44 h-44 rounded-full bg-white/10"></span>
+    <span class="absolute -right-8 -bottom-10 w-32 h-32 rounded-full bg-white/10"></span>
+    <span class="absolute left-4 bottom-2 text-6xl opacity-30 select-none">🩺</span>
+    <p class="relative text-sm opacity-90">👋 يا هلا فيكم</p>
+    <h2 class="relative text-2xl font-black leading-snug mt-1">أهلاً بطلاب كلية العلوم الصحية</h2>
+    <p class="relative text-sm opacity-90 mt-2 max-w-[16rem]">محاضراتكم وملخصاتكم وأسئلة الدورات بمكان واحد 📚</p>
+  </section>
+  ${myCard()}
+  <h2 class="font-black mb-3 flex items-center gap-2"><span class="w-1.5 h-5 rounded-full" style="background:var(--b6)"></span>الأقسام الأكاديمية</h2>
+  <div class="grid grid-cols-2 gap-3.5">${Object.entries(DEPTS).map(([k, d]) => `
+    <a href="#/${k}" class="relative overflow-hidden rounded-3xl p-4 text-white shadow-lg active:scale-95 transition" style="background:linear-gradient(145deg,${d.c[0]},${d.c[1]})">
+      <span class="absolute -top-6 -left-6 w-24 h-24 rounded-full bg-white/15"></span>
+      <span class="absolute -bottom-8 -right-4 w-28 h-28 rounded-full bg-white/10"></span>
+      <span class="absolute bottom-0 left-1 text-7xl opacity-25 rotate-12 select-none">${d.icon}</span>
+      <div class="relative flex flex-col min-h-[9.5rem]">
+        <span class="w-14 h-14 rounded-2xl bg-white/25 grid place-items-center text-3xl mb-3 shadow-inner">${d.icon}</span>
+        <h3 class="font-black leading-tight">${d.name}</h3>
+        <span class="mt-auto pt-3"><span class="text-xs font-bold bg-white/25 rounded-full px-3 py-1">تصفّح السنوات ←</span></span>
+      </div></a>`).join('')}</div>
+  <footer class="text-center mt-10 mb-2 text-sm text-slate-500 dark:text-slate-400"><div class="text-2xl mb-1">🎓</div>بإشراف زميلكم <b style="color:var(--b6)">عمر زينو</b></footer>`;
+
+/* ========== المفضلة والإشعارات والإعدادات ========== */
+const allFiles = () => { const o = []; for (const [d, arr] of Object.entries(data)) arr.forEach(s => Object.entries(s.files).forEach(([tab, fs]) => fs.forEach(f => o.push({ f, s, d, tab })))); return o; };
+let favs = new Set(); try { favs = new Set(JSON.parse(localStorage.getItem('fhs-favs') || '[]')); } catch {}
+const meta = x => `${DEPTS[x.d]?.name || ''} · ${x.s.name}`;
+let seen = +localStorage.getItem('fhs-seen'); if (!seen) { seen = Date.now(); localStorage.setItem('fhs-seen', seen); }
+const notifOn = () => localStorage.getItem('fhs-notif') !== 'off';
+let me = null; try { me = JSON.parse(localStorage.getItem('fhs-me')); if (!me || !DEPTS[me.dept] || !YEARS[me.year]) me = null; } catch { me = null; }
+const notifMine = () => me && localStorage.getItem('fhs-notif-all') !== '1';
+const fresh = () => notifOn() ? allFiles().filter(x => (x.f.ts || 0) > seen && (!notifMine() || (x.d === me.dept && x.s.year === me.year))) : [];
+let done = new Set(); try { done = new Set(JSON.parse(localStorage.getItem('fhs-done') || '[]')); } catch {}
+const doneCount = s => Object.values(s.files).flat().filter(f => done.has(f.id)).length;
+function drawProg(s) {
+  const n = nFiles(s), d = doneCount(s), pc = n ? Math.round(d / n * 100) : 0, el = $('#prog'); if (!el) return;
+  el.innerHTML = n ? `<div class="glass rounded-2xl p-3 mb-3"><div class="flex justify-between text-xs font-bold mb-1.5"><span>📈 تقدّمك بالمادة</span><span>${d} / ${n} · ${pc}%</span></div><div class="h-2.5 rounded-full bg-slate-300/50 dark:bg-slate-700"><div class="h-2.5 rounded-full transition-all duration-500" style="width:${pc}%;background:linear-gradient(90deg,var(--b5),var(--b7))"></div></div>${pc === 100 ? '<p class="text-xs text-center mt-2 font-bold">🎉 أنهيت كل ملفات هذه المادة!</p>' : ''}</div>` : '';
+}
+const myCard = () => me ? `<a href="#/${me.dept}/${me.year}" class="glass rounded-2xl p-4 mb-5 flex items-center gap-3 active:scale-[.98] transition"><span class="w-12 h-12 rounded-2xl grid place-items-center text-2xl text-white shadow" style="background:linear-gradient(135deg,${DEPTS[me.dept].c[0]},${DEPTS[me.dept].c[1]})">${DEPTS[me.dept].icon}</span><span class="flex-1 min-w-0"><b class="block truncate">دراستي: ${esc(DEPTS[me.dept].name)}</b><span class="text-xs opacity-70">${YEARS[me.year]} · اضغط للدخول مباشرة</span></span>${chev}</a>` : '';
+const meForm = () => `<select id="me-dept" class="inp mb-2"><option value="">— القسم —</option>${Object.entries(DEPTS).map(([k, d]) => `<option value="${k}" ${me && me.dept === k ? 'selected' : ''}>${d.name}</option>`).join('')}</select><select id="me-year" class="inp"><option value="">— السنة —</option>${Object.entries(YEARS).map(([k, n]) => `<option value="${k}" ${me && me.year === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+function bindMe() {
+  const sv = () => { const d = $('#me-dept').value, y = $('#me-year').value;
+    if (d && y) { me = { dept: d, year: y }; localStorage.setItem('fhs-me', JSON.stringify(me)); toast('تم حفظ قسمك وسنتك ✓'); } else if (!d && !y) { me = null; localStorage.removeItem('fhs-me'); }
+    updBell(); };
+  $('#me-dept').onchange = $('#me-year').onchange = sv;
+  $('#set-mine').onchange = e => { e.target.checked ? localStorage.removeItem('fhs-notif-all') : localStorage.setItem('fhs-notif-all', '1'); updBell(); };
+}
+function onboard() {
+  const opt = o => Object.entries(o).map(([k, v]) => `<option value="${k}">${esc(v.name || v)}</option>`).join('');
+  openSheet(`<div class="text-center"><div class="text-4xl mb-2">🎓</div><h3 class="font-black text-lg">أهلاً بك! خلّينا نجهّز تطبيقك</h3><p class="text-xs opacity-70 mb-4">اختر قسمك وسنتك لنعرض لك الأهم، ونرسل لك إشعارات تخصّك فقط</p></div>
+    <label class="text-xs font-bold">القسم</label><select id="onb-dept" class="inp mb-3 mt-1">${opt(DEPTS)}</select>
+    <label class="text-xs font-bold">السنة الدراسية</label><select id="onb-year" class="inp mb-4 mt-1">${opt(YEARS)}</select>
+    <button data-sa="onb-save" class="w-full py-3 rounded-xl font-bold text-white" style="background:var(--b6)">ابدأ 🚀</button>
+    <button data-sa="onb-skip" class="w-full py-2 mt-2 text-xs opacity-70">تخطي حالياً</button>`);
+}
+let shareTxt = '';
+function shareFile(id) {
+  const x = allFiles().find(y => y.f.id === id), u = x && safeUrl(x.f.url); if (!u) return;
+  shareTxt = `📚 ${x.f.title}
+${meta(x)}
+${u}`;
+  openSheet(`<h3 class="font-black mb-1">📤 مشاركة الملف</h3><p class="text-xs opacity-70 mb-4 truncate">${esc(x.f.title)}</p>
+    <div class="grid grid-cols-2 gap-3">
+      <a href="https://wa.me/?text=${encodeURIComponent(shareTxt)}" target="_blank" rel="noopener noreferrer" class="rounded-2xl py-3 text-center font-bold text-white" style="background:#25D366">💬 واتساب</a>
+      <a href="https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent(x.f.title + ' - ' + meta(x))}" target="_blank" rel="noopener noreferrer" class="rounded-2xl py-3 text-center font-bold text-white" style="background:#229ED9">✈️ تلغرام</a>
+      <button data-sa="copy" class="rounded-2xl py-3 font-bold bg-slate-100 dark:bg-slate-700">🔗 نسخ الرابط</button>
+      ${navigator.share ? '<button data-sa="native" class="rounded-2xl py-3 font-bold bg-slate-100 dark:bg-slate-700">⋯ المزيد</button>' : ''}
+    </div>`);
+}
+view.addEventListener('click', e => {
+  const dn = e.target.closest('[data-done]');
+  if (dn) { const id = dn.dataset.done; done.has(id) ? done.delete(id) : done.add(id); localStorage.setItem('fhs-done', JSON.stringify([...done])); redraw(); return; }
+  const sh = e.target.closest('[data-share]'); if (sh) shareFile(sh.dataset.share);
+});
+document.getElementById('sheet').addEventListener('click', async e => {
+  const a = e.target.closest('[data-sa]'), sheetEl = document.getElementById('sheet');
+  if (e.target === sheetEl && !me && !localStorage.getItem('fhs-onb') && document.getElementById('onb-dept')) localStorage.setItem('fhs-onb', 'skip');
+  if (!a) return;
+  const k = a.dataset.sa;
+  if (k === 'onb-save') { me = { dept: $('#onb-dept').value, year: $('#onb-year').value }; localStorage.setItem('fhs-me', JSON.stringify(me)); localStorage.setItem('fhs-onb', 'done'); closeSheet(); toast('أهلاً بك في ' + DEPTS[me.dept].name + ' 🎉'); updBell(); render(); }
+  if (k === 'onb-skip') { localStorage.setItem('fhs-onb', 'skip'); closeSheet(); }
+  if (k === 'copy') { try { await navigator.clipboard.writeText(shareTxt); toast('تم نسخ الرابط ✓'); } catch { toast('تعذر النسخ'); } closeSheet(); }
+  if (k === 'native') { try { await navigator.share({ text: shareTxt }); } catch {} closeSheet(); }
+});
+
+function updBell() { const n = fresh().length, b = $('#bell-badge'); b.textContent = n; b.classList.toggle('hidden', !n); $('#bell-btn').classList.toggle('hidden', !notifOn()); }
+const glass = (href, big, title, sub) => `<a href="${href}" class="glass rounded-3xl p-5 flex flex-col items-center text-center active:scale-95 transition"><span class="text-5xl mb-2 drop-shadow">${big}</span><b class="text-lg">${esc(title)}</b><span class="text-xs opacity-70 mt-1">${esc(sub)}</span><span class="mt-3 text-xs font-bold px-3 py-1 rounded-full" style="background:var(--b1);color:var(--b7)">فتح ←</span></a>`;
+function special(sp) {
+  if (sp === 'fav') {
+    view.innerHTML = '<div id="fav-list" class="space-y-2.5"></div>';
+    redraw = () => { const l = allFiles().filter(x => favs.has(x.f.id)); $('#fav-list').innerHTML = l.length ? l.map(x => fileRow(x.f, TABS[x.tab][1], meta(x))).join('') : empty('لا توجد ملفات مفضلة بعد.<br>اضغط ☆ على أي ملف لإضافته هنا'); };
+    redraw(); return ['⭐ المفضلة', 'ملفاتك المهمة بمكان واحد'];
+  }
+  const dark = document.documentElement.classList.contains('dark');
+  const sec = (t, b) => `<section class="glass rounded-3xl p-4"><h3 class="font-black mb-2">${t}</h3>${b}</section>`;
+  const sw = (id, label, on) => `<label class="flex justify-between items-center py-2"><span class="text-sm">${label}</span><input id="${id}" type="checkbox" ${on ? 'checked' : ''} class="w-5 h-5" style="accent-color:var(--b6)"></label>`;
+  view.innerHTML = `<div class="space-y-4">
+    ${sec('👤 الحساب', '<div class="flex items-center gap-3"><span class="w-12 h-12 rounded-full grid place-items-center text-2xl" style="background:var(--b1)">🎓</span><div><b>طالب زائر</b><p class="text-xs opacity-70">تسجيل الدخول ومزامنة المفضلة بين أجهزتك — قريباً</p></div></div>')}
+    ${sec('🎓 دراستي', meForm())}
+    ${sec('🎨 المظهر', sw('set-dark', 'الوضع الداكن', dark) + '<div id="swatches" class="flex justify-between gap-2 mt-3"></div>')}
+    ${sec('🔔 الإشعارات', sw('set-notif', 'إشعارات الملفات الجديدة', notifOn()) + sw('set-mine', 'قسمي وسنتي فقط', notifMine()) + '<p class="text-[11px] opacity-60">حدّد قسمك وسنتك أعلاه لتفعيل التخصيص</p>')}
+    ${sec('💾 التخزين', `<p class="text-xs opacity-70 mb-2">${saved.size} ملف محفوظ للاستخدام بدون إنترنت</p><button id="set-clear" class="w-full py-2.5 rounded-xl text-sm font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">حذف الملفات المحفوظة</button>`)}
+    <p class="text-center text-xs opacity-60 pt-2">الإصدار 1.1 · بإشراف زميلكم عمر زينو</p></div>`;
+  drawSwatches(); bindMe();
+  $('#set-dark').onchange = e => { document.documentElement.classList.toggle('dark', e.target.checked); try { localStorage.setItem('fhs-theme', e.target.checked ? 'dark' : 'light'); } catch {} };
+  $('#set-notif').onchange = async e => {
+    if (e.target.checked) { localStorage.removeItem('fhs-notif'); if ('Notification' in self && Notification.permission === 'default') await Notification.requestPermission(); }
+    else localStorage.setItem('fhs-notif', 'off');
+    updBell();
+  };
+  $('#set-clear').onclick = async () => { try { await caches.delete('fhs-files'); } catch {} saved.clear(); localStorage.removeItem('fhs-saved'); toast('تم حذف الملفات المحفوظة'); render(); };
+  return ['⚙️ الإعدادات', 'تخصيص التطبيق'];
+}
+
+/* ========== الرسم الرئيسي ========== */
+function render() {
+  route = parseRoute();
+  const { dept, year, sem, sub } = route, D = dept && DEPTS[dept];
+  const subject = sub && data[dept].find(s => s.id === sub);
+  const key = [dept, year, sem, sub, location.hash].join('/');
+  if (view.dataset.k !== key) { semQ = ''; searchQuery = ''; activeTab = 'pdfs'; scrollTo(0, 0); }
+  view.dataset.k = key;
+  const sp = ['fav', 'settings'].includes(location.hash.split('/')[1]) ? location.hash.split('/')[1] : '';
+  backBtn.classList.toggle('hidden', !dept && !sp); adminBtn.classList.toggle('hidden', !dept);
+  document.querySelectorAll('#bnav a').forEach(a => a.style.color = a.getAttribute('href') === (sp ? '#/' + sp : '#/') ? 'var(--b6)' : '');
+  let t = 'كلية العلوم الصحية', st = 'البوابة الأكاديمية الشاملة'; redraw = () => {};
+
+  if (sp) [t, st] = special(sp);
+  else if (!dept) view.innerHTML = home();
+  else if (!year) {
+    t = D.name; st = 'اختر السنة الدراسية';
+    const lt = allFiles().filter(x => x.d === dept).sort((a, b) => (b.f.ts || 0) - (a.f.ts || 0)).slice(0, 5);
+    view.innerHTML = `<div class="grid grid-cols-2 gap-3.5">${Object.entries(YEARS).map(([k, n], i) => glass(`#/${dept}/${k}`, ['1️⃣', '2️⃣', '3️⃣', '4️⃣'][i], n, data[dept].filter(s => s.year === k).length + ' مادة')).join('')}</div>`
+      + (lt.length ? `<h2 class="font-black mt-7 mb-3 flex items-center gap-2"><span class="w-1.5 h-5 rounded-full" style="background:var(--b6)"></span>🆕 آخر الملفات المضافة</h2><div class="space-y-2.5">${lt.map(x => fileRow(x.f, TABS[x.tab][1], x.s.name + ' · ' + YEARS[x.s.year] + (x.f.ts ? ' · ' + new Date(x.f.ts).toLocaleDateString('ar') : ''))).join('')}</div>` : '');
+    redraw = render;
+  } else if (!sem) {
+    t = YEARS[year]; st = D.name + ' · اختر الفصل';
+    view.innerHTML = `<div class="grid grid-cols-2 gap-3.5">${Object.entries(SEMS).map(([k, n], i) => glass(`#/${dept}/${year}/${k}`, i ? '🌸' : '🍂', n, subCount(dept, year, k) + ' مواد')).join('')}</div>`;
+  } else if (!subject) {
+    t = SEMS[sem]; st = D.name + ' · ' + YEARS[year];
+    view.innerHTML = `<input id="sem-q" type="search" value="${esc(semQ)}" placeholder="🔍 ابحث عن ملف داخل ${SEMS[sem]}..." class="inp !p-3 !rounded-2xl text-sm mb-4 shadow-sm"><div id="sem-list"></div>`;
+    const draw = () => {
+      const list = data[dept].filter(s => s.year === year && s.sem === sem), box = $('#sem-list');
+      if (!semQ) return box.innerHTML = list.length ? `<div class="space-y-3">${list.map(s => rowCard(`#/${dept}/${year}/${sem}/${s.id}`, '📖', s.name, nFiles(s) + ' ملف' + (nFiles(s) ? ' · ✓ ' + doneCount(s) + '/' + nFiles(s) : ''))).join('')}</div>` : empty('لا توجد مواد مضافة لهذا الفصل بعد.');
+      let res = '';
+      list.forEach(s => Object.entries(s.files).forEach(([k, arr]) => arr.forEach(f => {
+        if (f.title.toLowerCase().includes(semQ) || s.name.toLowerCase().includes(semQ)) res += fileRow(f, TABS[k][1], s.name + ' · ' + TABS[k][0]);
+      })));
+      box.innerHTML = res ? `<p class="text-xs text-slate-500 mb-2">نتائج البحث في ${SEMS[sem]}:</p><div class="space-y-2.5">${res}</div>` : empty('لا توجد ملفات تطابق بحثك داخل هذا الفصل.');
+    };
+    redraw = draw; $('#sem-q').oninput = e => { semQ = e.target.value.toLowerCase().trim(); draw(); }; draw();
+  } else {
+    t = subject.name; st = D.name + ' · ' + SEMS[sem];
+    view.innerHTML = `<div id="prog"></div><input id="file-q" type="search" value="${esc(searchQuery)}" placeholder="🔍 ابحث عن ملف في هذه المادة..." class="inp !p-3 !rounded-2xl text-sm mb-3 shadow-sm"><div id="tabs" class="flex gap-2 overflow-x-auto pb-2 mb-3"></div><div id="files" class="space-y-2.5"></div>`;
+    const drawT = () => $('#tabs').innerHTML = Object.entries(TABS).map(([k, [l]]) => `<button data-tab="${k}" class="shrink-0 px-4 py-2 !rounded-full text-xs font-bold transition ${activeTab === k ? 'text-white shadow' : 'card'}" ${activeTab === k ? 'style="background:var(--b6)"' : ''}>${l.replace(' (PDF)', '')} · ${subject.files[k].length}</button>`).join('');
+    const drawF = () => {
+      drawProg(subject);
+      const it = subject.files[activeTab].filter(f => f.title.toLowerCase().includes(searchQuery));
+      $('#files').innerHTML = it.length ? it.map(f => fileRow(f, TABS[activeTab][1])).join('') : empty(searchQuery ? 'لا توجد نتائج تطابق بحثك.' : 'لا تتوفر ملفات في هذا التبويب حالياً.');
+    };
+    redraw = drawF; drawT(); drawF();
+    $('#tabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (b) { activeTab = b.dataset.tab; drawT(); drawF(); } };
+    $('#file-q').oninput = e => { searchQuery = e.target.value.toLowerCase(); drawF(); };
+  }
+  updBell(); titleEl.textContent = t; $('#subtitle').textContent = st; document.title = t + ' | كلية العلوم الصحية';
+}
+
+/* ========== لوحة الإدارة ========== */
+const optList = obj => Object.entries(obj).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+['ns-year', 'nf-year'].forEach(id => $('#' + id).innerHTML = optList(YEARS));
+['ns-sem', 'nf-sem'].forEach(id => $('#' + id).innerHTML = optList(SEMS));
+$('#nf-tab').innerHTML = optList(Object.fromEntries(Object.entries(TABS).map(([k, v]) => [k, v[0]])));
+
+async function openAdmin() {
+  const dept = route.dept; if (!dept) return;
+  if (!crypto.subtle) return toast('المتصفح لا يدعم التحقق (يتطلب HTTPS)');
+  const pass = await dialog({ title: 'لوحة الإشراف', msg: 'أدخل كلمة سر قسم ' + DEPTS[dept].name, input: true, okText: 'دخول' });
+  if (pass === null) return;
+  if (await sha256(pass) !== DEPTS[dept].h) return toast('كلمة السر غير صحيحة!');
+  $('#adm-dept').textContent = DEPTS[dept].name;
+  $('#nf-year').value = route.year || 'Year1'; $('#nf-sem').value = route.sem || 'Sem1';
+  fillSubjects(); renderDel();
+  const m = $('#admin-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeAdmin() { const m = $('#admin-modal'); m.classList.add('hidden'); m.classList.remove('flex'); render(); }
+function fillSubjects() {
+  const list = data[route.dept].filter(s => s.year === $('#nf-year').value && s.sem === $('#nf-sem').value);
+  $('#nf-sub').innerHTML = list.length ? list.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('') : '<option value="">لا توجد مواد بعد</option>';
+}
+function renderDel() {
+  const q = $('#del-q').value.toLowerCase().trim(), box = $('#del-list');
+  let html = '';
+  data[route.dept].forEach(s => {
+    const label = `${YEARS[s.year]} · ${SEMS[s.sem]}`;
+    if (!q || s.name.toLowerCase().includes(q)) html += `
+      <div class="bg-rose-50/50 dark:bg-rose-950/20 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 flex justify-between items-center gap-2 text-xs">
+        <span class="font-bold">📘 ${esc(s.name)} <span class="font-normal text-slate-400">(${label})</span></span>
+        <button data-act="del-sub" data-sub="${s.id}" class="shrink-0 bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-1 rounded-lg">حذف المادة</button></div>`;
+    Object.entries(s.files).forEach(([tab, arr]) => arr.forEach(f => {
+      if (!q || f.title.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)) html += `
+      <div class="card p-2.5 flex justify-between items-center gap-2 text-xs mr-3">
+        <span class="min-w-0"><b class="block truncate">📄 ${esc(f.title)}</b><span class="text-[10px] text-slate-400">${esc(s.name)} · ${TABS[tab][0]}</span></span>
+        <button data-act="del-file" data-sub="${s.id}" data-tab="${tab}" data-fid="${f.id}" class="shrink-0 bg-slate-200 dark:bg-slate-700 text-rose-600 font-bold px-2.5 py-1 rounded-lg hover:bg-rose-600 hover:text-white transition">حذف الملف</button></div>`;
+    }));
+  });
+  box.innerHTML = html || '<p class="text-xs text-slate-400 text-center py-4">لا توجد نتائج.</p>';
+}
+
+$('#ns-add').onclick = () => {
+  const name = $('#ns-name').value.trim();
+  if (!name) return toast('يرجى كتابة اسم المادة');
+  data[route.dept].push({ id: uid(), year: $('#ns-year').value, sem: $('#ns-sem').value, name, files: emptyFiles() });
+  save(); $('#ns-name').value = ''; toast('تمت إضافة المادة'); fillSubjects(); renderDel();
+};
+$('#nf-add').onclick = () => {
+  const subj = data[route.dept].find(s => s.id === $('#nf-sub').value);
+  const title = $('#nf-title').value.trim(), url = safeUrl($('#nf-url').value.trim());
+  if (!subj) return toast('اختر المادة أو أضفها أولاً');
+  if (!title) return toast('يرجى إدخال عنوان الملف');
+  if (!url) return toast('الرابط يجب أن يبدأ بـ https://');
+  subj.files[$('#nf-tab').value].push({ id: uid(), title, url, ts: Date.now() });
+  save(); $('#nf-title').value = ''; $('#nf-url').value = ''; toast('تم حفظ الملف'); renderDel();
+};
+$('#del-list').onclick = async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const arr = data[route.dept], subj = arr.find(s => s.id === b.dataset.sub);
+  if (!subj) return;
+  const sure = await dialog({ title: 'تأكيد الحذف', msg: b.dataset.act === 'del-sub' ? `حذف مادة "${subj.name}" وكل ملفاتها؟` : 'إزالة هذا الملف؟', okText: 'حذف' });
+  if (!sure) return;
+  if (b.dataset.act === 'del-sub') data[route.dept] = arr.filter(s => s !== subj);
+  else subj.files[b.dataset.tab] = subj.files[b.dataset.tab].filter(f => f.id !== b.dataset.fid);
+  save(); fillSubjects(); renderDel();
+};
+$('#nf-year').onchange = $('#nf-sem').onchange = fillSubjects;
+$('#del-q').oninput = renderDel;
+$('#admin-btn').onclick = openAdmin;
+$('#admin-close').onclick = closeAdmin;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#admin-modal').classList.contains('hidden') && $('#dlg').classList.contains('hidden')) closeAdmin(); });
+
+/* ========== أزرار عامة ========== */
+const THEMES = { teal: ['فيروزي', '#0d9488'], blue: ['أزرق', '#2563eb'], violet: ['بنفسجي', '#7c3aed'], rose: ['وردي', '#e11d48'], amber: ['كهرماني', '#d97706'] };
+function drawSwatches() {
+  const cur = document.documentElement.dataset.theme;
+  $('#swatches').innerHTML = Object.entries(THEMES).map(([k, [n, c]]) => `<button data-c="${k}" class="flex flex-col items-center gap-1.5 text-xs font-bold"><span class="w-11 h-11 rounded-full grid place-items-center text-white text-lg shadow ${cur === k ? 'ring-4 ring-offset-2 ring-slate-300 dark:ring-slate-500' : ''}" style="background:${c}">${cur === k ? '✓' : ''}</span>${n}</button>`).join('');
+}
+const sheet = $('#sheet');
+const openSheet = h => { $('#sheet-body').innerHTML = h; sheet.classList.remove('hidden'); sheet.classList.add('flex'); };
+const closeSheet = () => { sheet.classList.add('hidden'); sheet.classList.remove('flex'); };
+sheet.onclick = e => {
+  if (e.target === sheet || e.target.closest('a')) return closeSheet();
+  const a = e.target.closest('[data-sa]'); if (!a) return;
+  if (a.dataset.sa === 'read') { seen = Date.now(); localStorage.setItem('fhs-seen', seen); updBell(); closeSheet(); }
+  if (a.dataset.sa === 'off') { localStorage.setItem('fhs-notif', 'off'); updBell(); closeSheet(); toast('تم إخفاء الإشعارات (فعّلها من الإعدادات)'); }
+};
+$('#bell-btn').onclick = () => {
+  const f = fresh();
+  openSheet('<h3 class="font-black mb-3">🔔 الإشعارات</h3>' + (f.length
+    ? `<div class="space-y-2">${f.map(x => `<a href="#/${x.d}/${x.s.year}/${x.s.sem}/${x.s.id}" class="glass rounded-xl p-3 flex gap-3 items-center text-sm"><span class="text-xl">${TABS[x.tab][1]}</span><span class="min-w-0"><b class="block truncate">${esc(x.f.title)}</b><span class="text-xs opacity-70">${esc(meta(x))}</span></span></a>`).join('')}</div>
+       <div class="flex gap-2 mt-4"><button data-sa="read" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style="background:var(--b6)">تحديد الكل كمقروء</button><button data-sa="off" class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-slate-100 dark:bg-slate-700">إخفاء الإشعارات</button></div>`
+    : '<p class="text-center py-6 text-slate-400">🎉 لا توجد إشعارات جديدة</p><button data-sa="off" class="w-full py-2.5 rounded-xl text-sm bg-slate-100 dark:bg-slate-700">إخفاء الإشعارات</button>'));
+};
+backBtn.onclick = () => {
+  const { dept, year, sem, sub } = route;
+  if (sub) go(dept, year, sem); else if (sem) go(dept, year); else if (year) go(dept); else go();
+};
+view.addEventListener('click', async e => {
+  const c = e.target.closest('[data-c]');
+  if (c) { document.documentElement.dataset.theme = c.dataset.c; try { localStorage.setItem('fhs-color', c.dataset.c); } catch {} drawSwatches(); return; }
+  const fv = e.target.closest('[data-fav]');
+  if (fv) { const id = fv.dataset.fav; favs.has(id) ? favs.delete(id) : favs.add(id); localStorage.setItem('fhs-favs', JSON.stringify([...favs])); redraw(); return; }
+  const sv = e.target.closest('[data-save]');
+  if (sv) { toast('⏳ جاري الحفظ...'); const ok = await cacheFile(sv.dataset.save); toast(ok ? '✓ تم الحفظ للاستخدام بدون إنترنت' : 'تعذر حفظ هذا الرابط (الموقع لا يسمح بالتحميل المباشر)'); redraw(); return; }
+  const a = e.target.closest('a[data-file]'); if (!a) return;
+  if (saved.has(a.href)) {
+    e.preventDefault(); const w = window.open('', '_blank');
+    const r = await (await caches.open('fhs-files')).match(a.href);
+    if (r && w) w.location.href = URL.createObjectURL(await r.blob()); else { if (w) w.close(); toast('تعذر فتح الملف المحفوظ'); }
+  } else if (!navigator.onLine) { e.preventDefault(); toast('📡 لا يوجد اتصال، والملف غير محفوظ بعد'); }
+  else cacheFile(a.href);
+});
+addEventListener('offline', () => toast('📡 أنت غير متصل، المحتوى المحفوظ ما زال متاحاً'));
+addEventListener('online', () => toast('✅ عاد الاتصال'));
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+addEventListener('hashchange', () => { closeSheet(); render(); });
+render();
+// إشعار نظام محلي عند وجود ملفات جديدة (الإشعارات الفورية الحقيقية تأتي مع Firebase)
+if (fresh().length && 'Notification' in self && Notification.permission === 'granted' && navigator.serviceWorker)
+  navigator.serviceWorker.ready.then(r => r.showNotification('📚 ملفات جديدة', { body: `تمت إضافة ${fresh().length} ملف جديد`, icon: 'icon.svg', dir: 'rtl', lang: 'ar' })).catch(() => {});
+// شاشة التحميل
+const spl = $('#splash');
+setTimeout(() => { spl.classList.add('out'); setTimeout(() => spl.remove(), 600); }, sessionStorage.getItem('fhs-splash') ? 150 : 1600);
+try { sessionStorage.setItem('fhs-splash', '1'); } catch {}
+setTimeout(() => { if (!me && !localStorage.getItem('fhs-onb')) onboard(); }, sessionStorage.getItem('fhs-splash') ? 900 : 2300);
+</script>
+</body>
+</html>
