@@ -63,6 +63,7 @@
     <button id="admin-close" aria-label="إغلاق" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold p-2">✕</button>
     <div class="border-b border-slate-100 dark:border-slate-700 pb-4 mb-5">
       <h3 class="text-lg font-black text-brand-800 dark:text-brand-400">🛠️ إدارة قسم: <span id="adm-dept"></span></h3>
+      <button id="adm-logout" class="text-[11px] mt-1 text-rose-500 font-bold">تسجيل الخروج</button>
     </div>
 
     <section class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 mb-5 space-y-3">
@@ -146,41 +147,25 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeUrl = u => { try { const x = new URL(u); return x.protocol === 'https:' ? x.href : null; } catch { return null; } };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const sha256 = async t => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, '0')).join('');
 
 /* ========== الثوابت ========== */
 const DEPTS = {
-  SLP: { name: 'تقويم الكلام واللغة', icon: '🗣️', c: ['#14b8a6','#0369a1'], h: 'ab5dcc1a16c8b86c6f9e1c666ef8e50d5dfd1fcb35d3fe6f7133209af3e37488' },
-  Audiology: { name: 'السمعيات', icon: '👂', c: ['#6366f1','#7e22ce'], h: '54b3a51133731af31a6d839861dc388514e9d3bd67da6d2c4a54b3366bb198d7' },
-  Prosthetics: { name: 'الأطراف الصناعية', icon: '🦾', c: ['#f59e0b','#dc2626'], h: 'ba870c20483c3eaffd03cdcea8fb343cfc0098847a092ea3db24b7fd177fd547' },
-  Occupational_Therapy: { name: 'العلاج الوظيفي', icon: '🖐️', c: ['#10b981','#047857'], h: '4d3981f9a5186f73ce47152e9137d20ae840fafa25e6d8f8adff258d8c2d082a' },
-  Clinical_Psychology: { name: 'علم النفس السريري', icon: '🧠', c: ['#ec4899','#7c3aed'], h: 'fb1549ec668427876d6567d44607845418b75dd11639a2d0a3cbdcf826e878c2' },
-  Radiology: { name: 'التشخيص الشعاعي', icon: '🦴', c: ['#0ea5e9','#1e3a8a'], h: 'ad5569b49703d11a572c3b6982c9d05adaaf5d62e1998cb82a31b8e494307012' }
+  SLP: { name: 'تقويم الكلام واللغة', icon: '🗣️', c: ['#14b8a6','#0369a1'] },
+  Audiology: { name: 'السمعيات', icon: '👂', c: ['#6366f1','#7e22ce'] },
+  Prosthetics: { name: 'الأطراف الصناعية', icon: '🦾', c: ['#f59e0b','#dc2626'] },
+  Occupational_Therapy: { name: 'العلاج الوظيفي', icon: '🖐️', c: ['#10b981','#047857'] },
+  Clinical_Psychology: { name: 'علم النفس السريري', icon: '🧠', c: ['#ec4899','#7c3aed'] },
+  Radiology: { name: 'التشخيص الشعاعي', icon: '🦴', c: ['#0ea5e9','#1e3a8a'] }
 };
 const YEARS = { Year1: 'السنة الأولى', Year2: 'السنة الثانية', Year3: 'السنة الثالثة', Year4: 'السنة الرابعة' };
 const SEMS = { Sem1: 'الفصل الأول', Sem2: 'الفصل الثاني' };
 const TABS = { pdfs: ['📚 المحاضرات (PDF)', '📄'], audios: ['🎙️ فويسات', '🎵'], summaries: ['📝 ملخصات', '📌'], exams: ['📑 أسئلة دورات', '📝'] };
 const emptyFiles = () => ({ pdfs: [], audios: [], summaries: [], exams: [] });
 
-/* ========== البيانات (تُحفظ محلياً في المتصفح) ========== */
-const KEY = 'fhs-data-v2';
-function seed() {
-  const d = Object.fromEntries(Object.keys(DEPTS).map(k => [k, []]));
-  d.SLP = [
-    { id: uid(), year: 'Year1', sem: 'Sem1', name: 'مقدمة في اضطرابات الكلام واللغة', files: {
-      pdfs: [{ id: uid(), title: 'المحاضرة 1: مدخل عام', url: 'https://example.com/1' }, { id: uid(), title: 'المحاضرة 2: التصنيفات الطبية', url: 'https://example.com/2' }],
-      audios: [{ id: uid(), title: 'شرح المحاضرة الأولى', url: 'https://example.com/a1' }],
-      summaries: [{ id: uid(), title: 'ملخص الفصل الأول الشامل', url: 'https://example.com/s1' }],
-      exams: [{ id: uid(), title: 'دورة 2024 الفصل الأول', url: 'https://example.com/e1' }] } },
-    { id: uid(), year: 'Year1', sem: 'Sem1', name: 'تشريح وفسيولوجيا أعضاء النطق', files: emptyFiles() },
-    { id: uid(), year: 'Year1', sem: 'Sem2', name: 'علم الصوتيات', files: emptyFiles() }
-  ];
-  return d;
-}
-let data;
-try { data = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { data = seed(); }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { toast('تعذر حفظ البيانات في المتصفح'); } };
-if (!localStorage.getItem(KEY)) save(); // تثبيت المعرّفات من أول فتح
+/* ========== البيانات (Firestore) ========== */
+const emptyData = () => Object.fromEntries(Object.keys(DEPTS).map(k => [k, []]));
+let data = emptyData(), loaded = false;
+const errMsg = e => e && e.code === 'permission-denied' ? 'ليس لديك صلاحية لهذه العملية' : 'حدث خطأ، تحقق من الاتصال';
 
 /* ========== حالة الواجهة ========== */
 let route = {}, activeTab = 'pdfs', searchQuery = '';
@@ -397,7 +382,7 @@ function render() {
     view.innerHTML = `<input id="sem-q" type="search" value="${esc(semQ)}" placeholder="🔍 ابحث عن ملف داخل ${SEMS[sem]}..." class="inp !p-3 !rounded-2xl text-sm mb-4 shadow-sm"><div id="sem-list"></div>`;
     const draw = () => {
       const list = data[dept].filter(s => s.year === year && s.sem === sem), box = $('#sem-list');
-      if (!semQ) return box.innerHTML = list.length ? `<div class="space-y-3">${list.map(s => rowCard(`#/${dept}/${year}/${sem}/${s.id}`, '📖', s.name, nFiles(s) + ' ملف' + (nFiles(s) ? ' · ✓ ' + doneCount(s) + '/' + nFiles(s) : ''))).join('')}</div>` : empty('لا توجد مواد مضافة لهذا الفصل بعد.');
+      if (!semQ) return box.innerHTML = list.length ? `<div class="space-y-3">${list.map(s => rowCard(`#/${dept}/${year}/${sem}/${s.id}`, '📖', s.name, nFiles(s) + ' ملف' + (nFiles(s) ? ' · ✓ ' + doneCount(s) + '/' + nFiles(s) : ''))).join('')}</div>` : empty(loaded ? 'لا توجد مواد مضافة لهذا الفصل بعد.' : '⏳ جاري تحميل المواد...');
       let res = '';
       list.forEach(s => Object.entries(s.files).forEach(([k, arr]) => arr.forEach(f => {
         if (f.title.toLowerCase().includes(semQ) || s.name.toLowerCase().includes(semQ)) res += fileRow(f, TABS[k][1], s.name + ' · ' + TABS[k][0]);
@@ -429,14 +414,20 @@ $('#nf-tab').innerHTML = optList(Object.fromEntries(Object.entries(TABS).map(([k
 
 async function openAdmin() {
   const dept = route.dept; if (!dept) return;
-  if (!crypto.subtle) return toast('المتصفح لا يدعم التحقق (يتطلب HTTPS)');
-  const pass = await dialog({ title: 'لوحة الإشراف', msg: 'أدخل كلمة سر قسم ' + DEPTS[dept].name, input: true, okText: 'دخول' });
-  if (pass === null) return;
-  if (await sha256(pass) !== DEPTS[dept].h) return toast('كلمة السر غير صحيحة!');
+  if (!window.FB) return toast('جاري تحميل الخدمة... حاول بعد لحظات');
+  const adm = await FB.admin();
+  if (!adm) return showLogin();
+  if (!(adm.role === 'super' || adm.dept === dept)) return toast('ليس لديك صلاحية على هذا القسم');
   $('#adm-dept').textContent = DEPTS[dept].name;
   $('#nf-year').value = route.year || 'Year1'; $('#nf-sem').value = route.sem || 'Sem1';
   fillSubjects(); renderDel();
   const m = $('#admin-modal'); m.classList.remove('hidden'); m.classList.add('flex');
+}
+function showLogin() {
+  openSheet(`<h3 class="font-black mb-3">🔐 دخول المشرفين</h3>
+    <input id="lg-email" type="email" dir="ltr" autocomplete="username" placeholder="البريد الإلكتروني" class="inp mb-2">
+    <input id="lg-pass" type="password" dir="ltr" autocomplete="current-password" placeholder="كلمة السر" class="inp mb-3">
+    <button data-sa="login" class="w-full py-3 rounded-xl font-bold text-white" style="background:var(--b6)">دخول</button>`);
 }
 function closeAdmin() { const m = $('#admin-modal'); m.classList.add('hidden'); m.classList.remove('flex'); render(); }
 function fillSubjects() {
@@ -462,31 +453,50 @@ function renderDel() {
   box.innerHTML = html || '<p class="text-xs text-slate-400 text-center py-4">لا توجد نتائج.</p>';
 }
 
-$('#ns-add').onclick = () => {
+$('#ns-add').onclick = async () => {
   const name = $('#ns-name').value.trim();
   if (!name) return toast('يرجى كتابة اسم المادة');
-  data[route.dept].push({ id: uid(), year: $('#ns-year').value, sem: $('#ns-sem').value, name, files: emptyFiles() });
-  save(); $('#ns-name').value = ''; toast('تمت إضافة المادة'); fillSubjects(); renderDel();
+  try { await FB.addSubject({ id: uid(), dept: route.dept, year: $('#ns-year').value, sem: $('#ns-sem').value, name, files: emptyFiles() }); $('#ns-name').value = ''; toast('تمت إضافة المادة'); }
+  catch (e) { toast(errMsg(e)); }
 };
-$('#nf-add').onclick = () => {
-  const subj = data[route.dept].find(s => s.id === $('#nf-sub').value);
+$('#nf-add').onclick = async () => {
+  const subj = data[route.dept].find(s => s.id === $('#nf-sub').value), tab = $('#nf-tab').value;
   const title = $('#nf-title').value.trim(), url = safeUrl($('#nf-url').value.trim());
   if (!subj) return toast('اختر المادة أو أضفها أولاً');
   if (!title) return toast('يرجى إدخال عنوان الملف');
   if (!url) return toast('الرابط يجب أن يبدأ بـ https://');
-  subj.files[$('#nf-tab').value].push({ id: uid(), title, url, ts: Date.now() });
-  save(); $('#nf-title').value = ''; $('#nf-url').value = ''; toast('تم حفظ الملف'); renderDel();
+  try { await FB.setFiles(subj.id, tab, [...subj.files[tab], { id: uid(), title, url, ts: Date.now() }]); $('#nf-title').value = ''; $('#nf-url').value = ''; toast('تم حفظ الملف'); }
+  catch (e) { toast(errMsg(e)); }
 };
 $('#del-list').onclick = async e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
-  const arr = data[route.dept], subj = arr.find(s => s.id === b.dataset.sub);
-  if (!subj) return;
+  const subj = data[route.dept].find(s => s.id === b.dataset.sub); if (!subj) return;
   const sure = await dialog({ title: 'تأكيد الحذف', msg: b.dataset.act === 'del-sub' ? `حذف مادة "${subj.name}" وكل ملفاتها؟` : 'إزالة هذا الملف؟', okText: 'حذف' });
   if (!sure) return;
-  if (b.dataset.act === 'del-sub') data[route.dept] = arr.filter(s => s !== subj);
-  else subj.files[b.dataset.tab] = subj.files[b.dataset.tab].filter(f => f.id !== b.dataset.fid);
-  save(); fillSubjects(); renderDel();
+  try {
+    if (b.dataset.act === 'del-sub') await FB.delSubject(subj.id);
+    else await FB.setFiles(subj.id, b.dataset.tab, subj.files[b.dataset.tab].filter(f => f.id !== b.dataset.fid));
+  } catch (err) { toast(errMsg(err)); }
 };
+$('#adm-logout').onclick = async () => { await FB.logout(); closeAdmin(); toast('تم تسجيل الخروج'); };
+document.getElementById('sheet').addEventListener('click', async e => {
+  if (!e.target.closest('[data-sa="login"]')) return;
+  const email = $('#lg-email').value.trim().toLowerCase(), pass = $('#lg-pass').value;
+  if (!email || !pass) return toast('أدخل البريد وكلمة السر');
+  try {
+    await FB.login(email, pass);
+    if (!(await FB.admin())) { await FB.logout(); return toast('هذا الحساب ليس مشرفاً'); }
+    closeSheet(); toast('أهلاً بك 👋'); openAdmin();
+  } catch { toast('بيانات الدخول غير صحيحة'); }
+});
+// استقبال المواد من Firestore (لحظياً، ويعمل من الكاش بدون إنترنت)
+addEventListener('fb-subjects', e => {
+  const d = emptyData();
+  e.detail.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(s => { s.files = Object.assign(emptyFiles(), s.files || {}); if (d[s.dept]) d[s.dept].push(s); });
+  data = d; loaded = true; render(); updBell();
+  if (!$('#admin-modal').classList.contains('hidden')) { const cur = $('#nf-sub').value; fillSubjects(); $('#nf-sub').value = cur; renderDel(); }
+});
+addEventListener('fb-error', () => toast('تعذر تحميل البيانات، تحقق من الاتصال'));
 $('#nf-year').onchange = $('#nf-sem').onchange = fillSubjects;
 $('#del-q').oninput = renderDel;
 $('#admin-btn').onclick = openAdmin;
@@ -547,6 +557,38 @@ const spl = $('#splash');
 setTimeout(() => { spl.classList.add('out'); setTimeout(() => spl.remove(), 600); }, sessionStorage.getItem('fhs-splash') ? 150 : 1600);
 try { sessionStorage.setItem('fhs-splash', '1'); } catch {}
 setTimeout(() => { if (!me && !localStorage.getItem('fhs-onb')) onboard(); }, sessionStorage.getItem('fhs-splash') ? 900 : 2300);
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDmwCEzpE3XL4PZNH4ubP8pwgEtYJeLgfs",
+  authDomain: "hsc-app-selo.firebaseapp.com",
+  projectId: "hsc-app-selo",
+  storageBucket: "hsc-app-selo.firebasestorage.app",
+  messagingSenderId: "171835378269",
+  appId: "1:171835378269:web:35319dc0aa8b24481c5bb4"
+});
+const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+const auth = getAuth(app);
+const ready = new Promise(r => { const off = onAuthStateChanged(auth, () => { off(); r(); }); });
+
+window.FB = {
+  login: (e, p) => signInWithEmailAndPassword(auth, e, p),
+  logout: () => signOut(auth),
+  admin: async () => {
+    await ready; const u = auth.currentUser; if (!u) return null;
+    try { const s = await getDoc(doc(db, 'admins', u.email.toLowerCase())); return s.exists() ? s.data() : null; } catch { return null; }
+  },
+  addSubject: s => setDoc(doc(db, 'subjects', s.id), { ...s, createdAt: Date.now() }),
+  setFiles: (id, tab, arr) => updateDoc(doc(db, 'subjects', id), { ['files.' + tab]: arr }),
+  delSubject: id => deleteDoc(doc(db, 'subjects', id))
+};
+onSnapshot(collection(db, 'subjects'),
+  snap => dispatchEvent(new CustomEvent('fb-subjects', { detail: snap.docs.map(d => ({ ...d.data(), id: d.id })) })),
+  err => dispatchEvent(new CustomEvent('fb-error', { detail: err })));
 </script>
 </body>
 </html>
