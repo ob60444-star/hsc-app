@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(db)/documents/admins/$(request.auth.token.email));
+    }
+    function adminData() {
+      return get(/databases/$(db)/documents/admins/$(request.auth.token.email)).data;
+    }
+    function canEdit(dept) {
+      return isAdmin() && (adminData().role == 'super' || adminData().dept == dept);
+    }
+
+    // المواد والملفات: قراءة للجميع، وكتابة للمشرف المخوّل بقسمه فقط
+    match /subjects/{id} {
+      allow read: if true;
+      allow create: if canEdit(request.resource.data.dept);
+      allow update: if canEdit(resource.data.dept)
+                    && request.resource.data.dept == resource.data.dept;
+      allow delete: if canEdit(resource.data.dept);
+    }
+
+    // قائمة المشرفين: يقرأ المشرف وثيقته فقط، والتعديل من Firebase Console فقط
+    match /admins/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if false;
+    }
+  }
+}
