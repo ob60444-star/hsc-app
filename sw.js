@@ -1,6 +1,6 @@
-const V = 'fhs-shell-v5';
+const V = 'fhs-shell-v7';
 const HOSTS = ['www.gstatic.com', 'cdn.tailwindcss.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(['./', 'index.html', 'manifest.webmanifest', 'icon.svg']))); self.skipWaiting(); });
+self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png']))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('fhs-shell') && k !== V).map(k => caches.delete(k)))).then(() => clients.claim())); });
 self.addEventListener('fetch', e => {
   const r = e.request;

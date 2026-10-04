@@ -45,9 +45,10 @@
 <main class="max-w-3xl mx-auto px-4 pt-4"><div id="view"></div></main>
 
 <nav id="bnav" class="fixed bottom-0 inset-x-0 z-40 glass !rounded-none !border-x-0 !border-b-0" style="padding-bottom:env(safe-area-inset-bottom)">
-  <div class="max-w-3xl mx-auto grid grid-cols-3 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+  <div class="max-w-3xl mx-auto grid grid-cols-4 text-[11px] font-bold text-slate-600 dark:text-slate-300">
     <a href="#/" class="flex flex-col items-center gap-0.5 py-2 active:scale-90 transition"><span class="text-xl">🏠</span>الرئيسية</a>
     <a href="#/fav" class="flex flex-col items-center gap-0.5 py-2 active:scale-90 transition"><span class="text-xl">⭐</span>المفضلة</a>
+    <a href="#/goals" class="flex flex-col items-center gap-0.5 py-2 active:scale-90 transition"><span class="text-xl">🎯</span>أهدافي</a>
     <a href="#/settings" class="flex flex-col items-center gap-0.5 py-2 active:scale-90 transition"><span class="text-xl">⚙️</span>الإعدادات</a>
   </div>
 </nav>
@@ -155,7 +156,8 @@ const DEPTS = {
   Prosthetics: { name: 'الأطراف الصناعية', icon: '🦾', c: ['#f59e0b','#dc2626'] },
   Occupational_Therapy: { name: 'العلاج الوظيفي', icon: '🖐️', c: ['#10b981','#047857'] },
   Clinical_Psychology: { name: 'علم النفس السريري', icon: '🧠', c: ['#ec4899','#7c3aed'] },
-  Radiology: { name: 'التشخيص الشعاعي', icon: '🦴', c: ['#0ea5e9','#1e3a8a'] }
+  Radiology: { name: 'التشخيص الشعاعي', icon: '🦴', c: ['#0ea5e9','#1e3a8a'] },
+  Health_Information_Management: { name: 'إدارة المعلومات الصحية', icon: '🗂️', c: ['#06b6d4','#4338ca'] }
 };
 const YEARS = { Year1: 'السنة الأولى', Year2: 'السنة الثانية', Year3: 'السنة الثالثة', Year4: 'السنة الرابعة' };
 const SEMS = { Sem1: 'الفصل الأول', Sem2: 'الفصل الثاني' };
@@ -239,7 +241,7 @@ const fileRow = (f, icon, sub) => {
     </div>
   </div>`;
 };
-const home = () => `
+const home = () => `${installBanner()}
   <section class="relative overflow-hidden rounded-3xl p-6 text-white mb-6 shadow-xl" style="background:linear-gradient(135deg,var(--b8),var(--b6))">
     <span class="absolute -left-10 -top-10 w-44 h-44 rounded-full bg-white/10"></span>
     <span class="absolute -right-8 -bottom-10 w-32 h-32 rounded-full bg-white/10"></span>
@@ -250,8 +252,8 @@ const home = () => `
   </section>
   ${myCard()}
   <h2 class="font-black mb-3 flex items-center gap-2"><span class="w-1.5 h-5 rounded-full" style="background:var(--b6)"></span>الأقسام الأكاديمية</h2>
-  <div class="grid grid-cols-2 gap-3.5">${Object.entries(DEPTS).map(([k, d]) => `
-    <a href="#/${k}" class="relative overflow-hidden rounded-3xl p-4 text-white shadow-lg active:scale-95 transition" style="background:linear-gradient(145deg,${d.c[0]},${d.c[1]})">
+  <div class="grid grid-cols-2 gap-3.5">${Object.entries(DEPTS).map(([k, d], i, a) => `
+    <a href="#/${k}" class="relative overflow-hidden rounded-3xl p-4 text-white shadow-lg active:scale-95 transition ${a.length % 2 && i === a.length - 1 ? 'col-span-2' : ''}" style="background:linear-gradient(145deg,${d.c[0]},${d.c[1]})">
       <span class="absolute -top-6 -left-6 w-24 h-24 rounded-full bg-white/15"></span>
       <span class="absolute -bottom-8 -right-4 w-28 h-28 rounded-full bg-white/10"></span>
       <span class="absolute bottom-0 left-1 text-7xl opacity-25 rotate-12 select-none">${d.icon}</span>
@@ -327,6 +329,7 @@ document.getElementById('sheet').addEventListener('click', async e => {
 function updBell() { const n = fresh().length, b = $('#bell-badge'); b.textContent = n; b.classList.toggle('hidden', !n); $('#bell-btn').classList.toggle('hidden', !notifOn()); }
 const glass = (href, big, title, sub) => `<a href="${href}" class="glass rounded-3xl p-5 flex flex-col items-center text-center active:scale-95 transition"><span class="text-5xl mb-2 drop-shadow">${big}</span><b class="text-lg">${esc(title)}</b><span class="text-xs opacity-70 mt-1">${esc(sub)}</span><span class="mt-3 text-xs font-bold px-3 py-1 rounded-full" style="background:var(--b1);color:var(--b7)">فتح ←</span></a>`;
 function special(sp) {
+  if (sp === 'goals') return goalsView();
   if (sp === 'fav') {
     view.innerHTML = '<div id="fav-list" class="space-y-2.5"></div>';
     redraw = () => { const l = allFiles().filter(x => favs.has(x.f.id)); $('#fav-list').innerHTML = l.length ? l.map(x => fileRow(x.f, TABS[x.tab][1], meta(x))).join('') : empty('لا توجد ملفات مفضلة بعد.<br>اضغط ☆ على أي ملف لإضافته هنا'); };
@@ -337,6 +340,7 @@ function special(sp) {
   const sw = (id, label, on) => `<label class="flex justify-between items-center py-2"><span class="text-sm">${label}</span><input id="${id}" type="checkbox" ${on ? 'checked' : ''} class="w-5 h-5" style="accent-color:var(--b6)"></label>`;
   view.innerHTML = `<div class="space-y-4">
     ${sec('👤 الحساب', '<div class="flex items-center gap-3"><span class="w-12 h-12 rounded-full grid place-items-center text-2xl" style="background:var(--b1)">🎓</span><div><b>طالب زائر</b><p class="text-xs opacity-70">تسجيل الدخول ومزامنة المفضلة بين أجهزتك — قريباً</p></div></div>')}
+    ${installSec()}
     ${sec('🎓 دراستي', meForm())}
     ${sec('🎨 المظهر', sw('set-dark', 'الوضع الداكن', dark) + '<div id="swatches" class="flex justify-between gap-2 mt-3"></div>')}
     ${sec('🔔 الإشعارات', sw('set-notif', 'إشعارات الملفات الجديدة', notifOn()) + sw('set-mine', 'قسمي وسنتي فقط', notifMine()) + '<p class="text-[11px] opacity-60">حدّد قسمك وسنتك أعلاه لتفعيل التخصيص</p>')}
@@ -353,15 +357,116 @@ function special(sp) {
   return ['⚙️ الإعدادات', 'تخصيص التطبيق'];
 }
 
+/* ========== التثبيت ========== */
+let deferredPrompt = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const canInstall = () => !isStandalone() && (deferredPrompt || isIOS());
+const installBanner = () => canInstall() && Date.now() - (+localStorage.getItem('fhs-inst-x') || 0) > 6048e5
+  ? `<div class="glass rounded-2xl p-3 mb-4 flex items-center gap-3"><span class="text-2xl">📲</span><div class="flex-1 min-w-0"><b class="block text-sm">ثبّت التطبيق على موبايلك</b><span class="text-[11px] opacity-70">يفتح بنقرة ويعمل بدون إنترنت</span></div><button data-install class="px-3.5 py-2 rounded-xl text-xs font-bold text-white" style="background:var(--b6)">تثبيت</button><button data-install-x aria-label="إخفاء" class="text-slate-400 px-1">✕</button></div>` : '';
+const installSec = () => canInstall() ? `<section class="glass rounded-3xl p-4"><h3 class="font-black mb-2">📲 تثبيت التطبيق</h3><button data-install class="w-full py-2.5 rounded-xl text-sm font-bold text-white" style="background:var(--b6)">تثبيت على الشاشة الرئيسية</button></section>` : '';
+async function doInstall() {
+  if (deferredPrompt) { deferredPrompt.prompt(); try { await deferredPrompt.userChoice; } catch {} deferredPrompt = null; render(); }
+  else openSheet(`<h3 class="font-black mb-3">📲 التثبيت على الآيفون</h3><ol class="space-y-2 text-sm list-decimal pr-5"><li>افتح الموقع من متصفح <b>Safari</b></li><li>اضغط أيقونة المشاركة <b>⬆️</b> أسفل الشاشة</li><li>اختر <b>«إضافة إلى الشاشة الرئيسية»</b></li><li>اضغط <b>إضافة</b></li></ol>`);
+}
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if (!location.hash.slice(2)) render(); });
+addEventListener('appinstalled', () => { deferredPrompt = null; toast('✓ تم تثبيت التطبيق'); render(); });
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-install]')) doInstall();
+  else if (e.target.closest('[data-install-x]')) { localStorage.setItem('fhs-inst-x', Date.now()); render(); }
+});
+
+/* ========== الأهداف والدراسة ========== */
+const jget = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const jset = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+let tick = null;
+const dayKey = (d = new Date()) => d.toLocaleDateString('en-CA');
+const tmState = () => jget('fhs-timer', { run: false, start: 0, acc: 0 });
+const elapsed = (t = tmState()) => t.acc + (t.run ? (Date.now() - t.start) / 1000 : 0);
+const sessions = () => jget('fhs-study', {});
+const hms = x => { x = Math.floor(x); return [x / 3600, x % 3600 / 60, x % 60].map(n => String(Math.floor(n)).padStart(2, '0')).join(':'); };
+const hm = x => { const h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60); return h ? `${h}س ${m}د` : `${m}د`; };
+const goalSec = () => (+localStorage.getItem('fhs-goalh') || 2) * 3600;
+const todaySec = () => (sessions()[dayKey()] || 0) + elapsed();
+const streak = () => {
+  const s = sessions(), t = dayKey(), v = k => (s[k] || 0) + (k === t ? elapsed() : 0), d = new Date();
+  if (v(t) < 600) d.setDate(d.getDate() - 1);
+  let n = 0; while (v(dayKey(d)) >= 600) { n++; d.setDate(d.getDate() - 1); } return n;
+};
+function goalsView() {
+  const t = tmState(), run = t.run, has = run || t.acc > 0, s = sessions(), gs = goalSec();
+  const goals = jget('fhs-goals', []), files = allFiles(), pl = jget('fhs-plan', []).map(id => files.find(x => x.f.id === id)).filter(Boolean);
+  const week = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); const k = dayKey(d); return { l: d.toLocaleDateString('ar', { weekday: 'short' }), v: (s[k] || 0) + (k === dayKey() ? elapsed() : 0) }; });
+  const mx = Math.max(gs, ...week.map(w => w.v)), pd = pl.filter(x => done.has(x.f.id)).length;
+  const btn = (a, l, st) => `<button data-tm="${a}" class="flex-1 py-3 rounded-xl font-bold text-sm text-white" style="${st}">${l}</button>`;
+  const sec = (h, b) => `<section class="glass rounded-3xl p-4"><h3 class="font-black mb-3">${h}</h3>${b}</section>`;
+  view.innerHTML = `<div class="space-y-4">
+    <section class="glass rounded-3xl p-5 text-center">
+      <div id="tm-disp" class="text-5xl font-black tabular-nums tracking-wider" dir="ltr">${hms(elapsed(t))}</div>
+      <p class="text-xs opacity-70 mt-1">${run ? '🔥 جلسة دراسة جارية' : has ? '⏸ متوقف مؤقتاً' : 'جاهز للبدء؟'}</p>
+      <div class="flex gap-2 mt-4">${run ? btn('pause', '⏸ إيقاف مؤقت', 'background:#f59e0b') + btn('finish', '⏹ إنهاء وحفظ', 'background:#e11d48')
+        : has ? btn('start', '▶ متابعة', 'background:var(--b6)') + btn('finish', '⏹ إنهاء وحفظ', 'background:#e11d48') : btn('start', '▶ ابدأ الدراسة', 'background:var(--b6)')}</div>
+    </section>
+    ${sec('🎯 هدف اليوم', `<div class="flex justify-between items-center mb-2 text-xs"><span class="font-bold" id="td-txt">${hm(todaySec())} من ${hm(gs)}</span><label class="flex items-center gap-1">الهدف <input id="gh" type="number" min="0.5" max="16" step="0.5" value="${gs / 3600}" class="inp !w-16 !p-1 text-center"> ساعة</label></div>
+      <div class="h-3 rounded-full bg-slate-300/50 dark:bg-slate-700"><div id="td-bar" class="h-3 rounded-full transition-all" style="width:${Math.min(100, todaySec() / gs * 100)}%;background:linear-gradient(90deg,var(--b5),var(--b7))"></div></div>
+      <p class="text-xs font-bold mt-2">🔥 ${streak()} يوم متتالي <span class="opacity-60 font-normal">(10 دقائق دراسة أو أكثر باليوم)</span></p>`)}
+    ${sec('📊 آخر 7 أيام', `<div class="flex items-end justify-between gap-2 h-32">${week.map(w => `<div class="flex-1 h-full flex flex-col items-center justify-end gap-1"><span class="text-[10px] opacity-70">${w.v >= 60 ? hm(w.v) : ''}</span><div class="w-full rounded-t-lg" style="height:${Math.max(3, w.v / mx * 65)}%;background:${w.v >= gs ? 'var(--b6)' : 'var(--b3)'}"></div><span class="text-[10px]">${w.l}</span></div>`).join('')}</div>`)}
+    ${sec('✅ أهدافي', `<div class="flex gap-2 mb-2"><input id="g-in" maxlength="100" placeholder="مثال: أنهي فصل التشريح" class="inp flex-1"><button data-goal-add class="px-4 rounded-xl text-white font-bold" style="background:var(--b6)">＋</button></div>
+      ${goals.length ? goals.map(g => `<div class="flex items-center gap-2 py-1.5"><button data-goal-t="${g.id}" class="text-xl">${g.done ? '✅' : '⬜'}</button><span class="flex-1 text-sm ${g.done ? 'line-through opacity-50' : ''}">${esc(g.text)}</span><button data-goal-d="${g.id}" class="text-slate-400 px-1" aria-label="حذف">🗑️</button></div>`).join('') : '<p class="text-xs opacity-60 text-center py-2">ما في أهداف بعد، أضف أول هدف لك 👆</p>'}`)}
+    ${sec(`📌 خطتي للدراسة <span class="text-xs font-normal opacity-70">(${pd}/${pl.length} تمت)</span>`, `<button data-plan-add class="w-full py-2.5 rounded-xl text-sm font-bold border-2 border-dashed mb-3" style="border-color:var(--b5);color:var(--b7)">＋ أضف ملفات للخطة</button>
+      <div class="space-y-2.5">${pl.length ? pl.map(x => `<div>${fileRow(x.f, TABS[x.tab][1], meta(x))}<button data-plan-rm="${x.f.id}" class="text-[11px] text-rose-500 mt-1 pr-2">إزالة من الخطة</button></div>`).join('') : '<p class="text-xs opacity-60 text-center py-2">اختر الملفات اللي ناوي تدرسها وتابع تقدمك هون</p>'}</div>`)}
+  </div>`;
+  redraw = render;
+  if (run) tick = setInterval(() => {
+    const e = $('#tm-disp'); if (!e) return clearInterval(tick);
+    e.textContent = hms(elapsed()); $('#td-txt').textContent = hm(todaySec()) + ' من ' + hm(gs); $('#td-bar').style.width = Math.min(100, todaySec() / gs * 100) + '%';
+  }, 1000);
+  return ['🎯 أهدافي', 'دراستك تحت السيطرة'];
+}
+function planList(q) {
+  q = q.toLowerCase().trim(); const plan = jget('fhs-plan', []); let l = allFiles();
+  if (q) l = l.filter(x => x.f.title.toLowerCase().includes(q) || x.s.name.toLowerCase().includes(q)); else if (me) l = l.filter(x => x.d === me.dept && x.s.year === me.year);
+  l = l.slice(0, 50);
+  return l.length ? l.map(x => `<label class="glass rounded-xl p-2.5 flex items-center gap-2.5 text-sm"><input type="checkbox" data-pl="${x.f.id}" ${plan.includes(x.f.id) ? 'checked' : ''} class="w-5 h-5" style="accent-color:var(--b6)"><span class="min-w-0"><b class="block truncate">${esc(x.f.title)}</b><span class="text-[11px] opacity-70">${esc(meta(x))}</span></span></label>`).join('') : '<p class="text-center text-xs opacity-60 py-6">لا توجد ملفات مطابقة</p>';
+}
+view.addEventListener('click', async e => {
+  const tm = e.target.closest('[data-tm]');
+  if (tm) {
+    const a = tm.dataset.tm, t = tmState();
+    if (a === 'start') jset('fhs-timer', { run: true, start: Date.now(), acc: t.acc });
+    if (a === 'pause') jset('fhs-timer', { run: false, start: 0, acc: elapsed(t) });
+    if (a === 'finish') {
+      const sec = elapsed(t), reset = () => jset('fhs-timer', { run: false, start: 0, acc: 0 });
+      if (sec > 36000 && !(await dialog({ title: 'جلسة طويلة', msg: 'المؤقت شغال من أكتر من 10 ساعات. هل تريد حفظها كاملة؟ (إلغاء = تجاهلها)', okText: 'حفظ' }))) { reset(); return render(); }
+      const s = sessions(); s[dayKey()] = (s[dayKey()] || 0) + sec; jset('fhs-study', s); reset(); toast('✓ تم حفظ جلسة ' + hm(sec));
+    }
+    return render();
+  }
+  if (e.target.closest('[data-goal-add]')) { const v = $('#g-in').value.trim(); if (!v) return; const g = jget('fhs-goals', []); g.unshift({ id: uid(), text: v, done: false }); jset('fhs-goals', g); return render(); }
+  const gt = e.target.closest('[data-goal-t]'); if (gt) { const g = jget('fhs-goals', []), x = g.find(y => y.id === gt.dataset.goalT); if (x) x.done = !x.done; jset('fhs-goals', g); return render(); }
+  const gd = e.target.closest('[data-goal-d]'); if (gd) { jset('fhs-goals', jget('fhs-goals', []).filter(y => y.id !== gd.dataset.goalD)); return render(); }
+  if (e.target.closest('[data-plan-add]')) return openSheet(`<h3 class="font-black mb-3">📌 اختر ملفات خطتك</h3><input id="pl-q" type="search" placeholder="🔍 ابحث عن ملف أو مادة..." class="inp mb-3"><div id="pl-list" class="space-y-2 max-h-[50vh] overflow-y-auto">${planList('')}</div>`);
+  const pr = e.target.closest('[data-plan-rm]'); if (pr) { jset('fhs-plan', jget('fhs-plan', []).filter(id => id !== pr.dataset.planRm)); render(); }
+});
+view.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'g-in') $('[data-goal-add]').click(); });
+view.addEventListener('change', e => { if (e.target.id === 'gh') { localStorage.setItem('fhs-goalh', Math.min(16, Math.max(0.5, +e.target.value || 2))); render(); } });
+document.addEventListener('input', e => { if (e.target.id === 'pl-q') $('#pl-list').innerHTML = planList(e.target.value); });
+document.addEventListener('change', e => {
+  const c = e.target.closest && e.target.closest('[data-pl]'); if (!c) return;
+  const p = jget('fhs-plan', []), i = p.indexOf(c.dataset.pl);
+  if (c.checked && i < 0) p.push(c.dataset.pl); if (!c.checked && i >= 0) p.splice(i, 1);
+  jset('fhs-plan', p); if (location.hash === '#/goals') render();
+});
+
 /* ========== الرسم الرئيسي ========== */
 function render() {
-  route = parseRoute();
+  route = parseRoute(); clearInterval(tick);
   const { dept, year, sem, sub } = route, D = dept && DEPTS[dept];
   const subject = sub && data[dept].find(s => s.id === sub);
   const key = [dept, year, sem, sub, location.hash].join('/');
   if (view.dataset.k !== key) { semQ = ''; searchQuery = ''; activeTab = 'pdfs'; scrollTo(0, 0); }
   view.dataset.k = key;
-  const sp = ['fav', 'settings'].includes(location.hash.split('/')[1]) ? location.hash.split('/')[1] : '';
+  const sp = ['fav', 'goals', 'settings'].includes(location.hash.split('/')[1]) ? location.hash.split('/')[1] : '';
   backBtn.classList.toggle('hidden', !dept && !sp); adminBtn.classList.toggle('hidden', !dept);
   document.querySelectorAll('#bnav a').forEach(a => a.style.color = a.getAttribute('href') === (sp ? '#/' + sp : '#/') ? 'var(--b6)' : '');
   let t = 'كلية العلوم الصحية', st = 'البوابة الأكاديمية الشاملة'; redraw = () => {};
